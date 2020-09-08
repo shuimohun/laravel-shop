@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Exceptions\InternalException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class ProductSku extends Model
 {
