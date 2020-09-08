@@ -13,10 +13,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 Route::get('/', 'PagesController@root')->name('root');
+Route::redirect('/', '/products')->name('root');
+Route::get('products', 'ProductsController@index')->name('products.index');
 
 Auth::routes(['verify' => true]);
-
-Route::get('/home', 'HomeController@index')->name('home');
 
 // auth 中间件代表需要登录，verified中间件代表需要经过邮箱验证
 Route::group(['middleware' => ['auth', 'verified']], function() {
@@ -28,12 +28,10 @@ Route::group(['middleware' => ['auth', 'verified']], function() {
     Route::put('user_addresses/{user_address}', 'UserAddressesController@update')->name('user_addresses.update');
     Route::delete('user_addresses/{user_address}', 'UserAddressesController@destroy')->name('user_addresses.destroy');
 
-    Route::redirect('/', '/products')->name('root');
-    Route::get('products', 'ProductsController@index')->name('products.index');
-    Route::get('products/{product}', 'ProductsController@show')->name('products.show');
     Route::post('products/{product}/favorite', 'ProductsController@favor')->name('products.favor');
     Route::delete('products/{product}/favorite', 'ProductsController@disfavor')->name('products.disfavor');
-
-
+    Route::get('products/favorites', 'ProductsController@favorites')->name('products.favorites');
 
 });
+
+Route::get('products/{product}', 'ProductsController@show')->name('products.show');
