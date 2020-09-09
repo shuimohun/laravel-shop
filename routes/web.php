@@ -64,6 +64,8 @@ Route::group(['middleware' => ['auth', 'verified']], function() {
     // 微信支付
     Route::get('payment/{order}/wechat', 'PaymentController@payByWechat')->name('payment.wechat');
 
+
+
 });
 
 // 商品详情
@@ -73,3 +75,4 @@ Route::get('products/{product}', 'ProductsController@show')->name('products.show
 Route::post('payment/alipay/notify', 'PaymentController@alipayNotify')->name('payment.alipay.notify');
 // 微信支付异步回调
 Route::post('payment/wechat/notify', 'PaymentController@wechatNotify')->name('payment.wechat.notify');
+Route::post('payment/wechat/refund_notify', 'PaymentController@wechatRefundNotify')->name('payment.wechat.refund_notify');

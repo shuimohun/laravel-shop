@@ -11,6 +11,15 @@ use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
+    /**
+     * 支付宝支付
+     *
+     * @param Order $order
+     * @param Request $request
+     * @return mixed
+     * @throws InvalidRequestException
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
     public function payByAlipay(Order $order, Request $request)
     {
         // 判断订单是否属于当前用户
@@ -28,7 +37,12 @@ class PaymentController extends Controller
         ]);
     }
 
-    // 前端回调页面
+    /**
+     * 支付宝支付 - 前端回调页面
+     *
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
     public function alipayReturn(Request $request)
     {
         try {
@@ -40,7 +54,10 @@ class PaymentController extends Controller
         return view('pages.success', ['msg' => '付款成功']);
     }
 
-    // 服务器端回调
+    /**
+     * 支付宝支付 - 服务器端回调
+     * @return string
+     */
     public function alipayNotify()
     {
         // 校验输入参数
@@ -74,6 +91,15 @@ class PaymentController extends Controller
         return app('alipay')->success();
     }
 
+    /**
+     * 微信支付
+     *
+     * @param Order $order
+     * @param Request $request
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     * @throws InvalidRequestException
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
     public function payByWechat(Order $order, Request $request)
     {
         // 校验权限
@@ -95,6 +121,11 @@ class PaymentController extends Controller
         return response($qrCode->writeString(), 200, ['Content-Type' => $qrCode->getContentType()]);
     }
 
+    /**
+     * 微信支付 - 回调
+     *
+     * @return string
+     */
     public function wechatNotify()
     {
         // 校验回调参数是否正确
@@ -119,6 +150,41 @@ class PaymentController extends Controller
         ]);
 
         $this->afterPaid($order);
+
+        return app('wechat_pay')->success();
+    }
+
+    /**
+     * 微信支付 - 退款回调
+     *
+     * @param Request $request
+     * @return string
+     */
+    public function wechatRefundNotify(Request $request)
+    {
+        // 给微信的失败响应
+        $failXml = '<xml><return_code><![CDATA[FAIL]]></return_code><return_msg><![CDATA[FAIL]]></return_msg></xml>';
+        $data = app('wechat_pay')->verify(null, true);
+
+        // 没有找到对应的订单，原则上不可能发生，保证代码健壮性
+        if(!$order = Order::where('no', $data['out_trade_no'])->first()) {
+            return $failXml;
+        }
+
+        if ($data['refund_status'] === 'SUCCESS') {
+            // 退款成功，将订单退款状态改成退款成功
+            $order->update([
+                'refund_status' => Order::REFUND_STATUS_SUCCESS,
+            ]);
+        } else {
+            // 退款失败，将具体状态存入 extra 字段，并表退款状态改成失败
+            $extra = $order->extra;
+            $extra['refund_failed_code'] = $data['refund_status'];
+            $order->update([
+                'refund_status' => Order::REFUND_STATUS_FAILED,
+                'extra' => $extra
+            ]);
+        }
 
         return app('wechat_pay')->success();
     }
