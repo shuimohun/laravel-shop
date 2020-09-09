@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
 class OrdersController extends AdminController
 {
     use ValidatesRequests;
-    
+
     /**
      * Title for current resource.
      *
