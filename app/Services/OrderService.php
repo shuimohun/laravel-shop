@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\CouponCodeUnavailableException;
 use App\Exceptions\InternalException;
+use App\Jobs\RefundInstallmentOrder;
 use App\Models\CouponCode;
 use App\Models\User;
 use App\Models\UserAddress;
@@ -15,6 +16,7 @@ use Carbon\Carbon;
 
 class OrderService
 {
+    // 普通商品下单
     public function store(User $user, UserAddress $address, $remark, $items, CouponCode $coupon = null)
     {
         // 如果传入了优惠券，则先检查是否可用
@@ -88,7 +90,7 @@ class OrderService
         return $order;
     }
 
-    // 新建一个 crowdfunding 方法用于实现众筹商品下单逻辑
+    // 众筹商品下单
     public function crowdfunding(User $user, UserAddress $address, ProductSku $sku, $amount)
     {
         // 开启事务
@@ -135,6 +137,7 @@ class OrderService
         return $order;
     }
 
+    // 订单退款
     public function refundOrder(Order $order)
     {
         // 判断该订单的支付方式
@@ -175,6 +178,14 @@ class OrderService
                         'refund_status' => Order::REFUND_STATUS_SUCCESS,
                     ]);
                 }
+                break;
+            case 'installment':
+                $order->update([
+                    'refund_no' => Order::getAvailableRefundNo(), // 生成退款订单号
+                    'refund_status' => Order::REFUND_STATUS_PROCESSING, // 将退款状态改为退款中
+                ]);
+                // 触发退款异步任务
+                dispatch(new RefundInstallmentOrder($order));
                 break;
             default:
                 throw new InternalException('未知订单支付方式：' . $order->payment_method);
