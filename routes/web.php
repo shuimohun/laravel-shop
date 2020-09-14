@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
-Route::get('/', 'PagesController@root')->name('root');
-Route::redirect('/', '/products')->name('root');
+//Route::get('/', 'PagesController@root')->name('root');
+Route::get('/', '/products')->name('root');
 
 // 商品列表
 Route::get('products', 'ProductsController@index')->name('products.index');
