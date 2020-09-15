@@ -231,6 +231,7 @@ return [
 
     ],
     'order_ttl' => 3600,
+    'seckill_order_ttl' => 600,
     'ngrok_url' => env('NGROK_URL'),
     'installment_fee_rate' => [
         3  => 1.5,

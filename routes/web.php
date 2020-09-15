@@ -50,6 +50,9 @@ Route::group(['middleware' => ['auth', 'verified']], function() {
     Route::post('orders/{order}/review', 'OrdersController@sendReview')->name('orders.review.store');
     Route::post('orders/{order}/apply_refund', 'OrdersController@applyRefund')->name('orders.apply_refund');
 
+    Route::post('crowdfunding_orders', 'OrdersController@crowdfunding')->name('crowdfunding_orders.store');
+    Route::post('seckill_orders', 'OrdersController@seckill')->name('seckill_orders.store');
+
     // 支付宝支付
     Route::get('payment/{order}/alipay', 'PaymentController@payByAlipay')->name('payment.alipay');
     Route::get('payment/alipay/return', 'PaymentController@alipayReturn')->name('payment.alipay.return');
@@ -65,7 +68,7 @@ Route::group(['middleware' => ['auth', 'verified']], function() {
 
     // 优惠券
     Route::get('coupon_codes/{code}', 'CouponCodesController@show')->name('coupon_codes.show');
-    Route::post('crowdfunding_orders', 'OrdersController@crowdfunding')->name('crowdfunding_orders.store');
+
 
 
 });
