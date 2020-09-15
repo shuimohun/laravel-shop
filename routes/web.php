@@ -17,7 +17,7 @@ Route::get('/', 'PagesController@root')->name('root');
 // 商品列表
 Route::get('products', 'ProductsController@index')->name('products.index');
 
-Route::redirect('/', '/products')->name('root');
+Route::redirect('/', '/products')->name('root.index');
 
 Auth::routes(['verify' => true]);
 
