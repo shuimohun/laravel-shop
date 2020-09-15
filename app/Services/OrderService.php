@@ -13,6 +13,7 @@ use App\Models\ProductSku;
 use App\Exceptions\InvalidRequestException;
 use App\Jobs\CloseOrder;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Redis;
 
 class OrderService
 {
@@ -29,16 +30,16 @@ class OrderService
             // 更新此地址的最后使用时间
             $address->update(['last_used_at' => Carbon::now()]);
             // 创建一个订单
-            $order   = new Order([
-                'address'      => [ // 将地址信息放入订单中
-                    'address'       => $address->full_address,
-                    'zip'           => $address->zip,
-                    'contact_name'  => $address->contact_name,
+            $order = new Order([
+                'address' => [ // 将地址信息放入订单中
+                    'address' => $address->full_address,
+                    'zip' => $address->zip,
+                    'contact_name' => $address->contact_name,
                     'contact_phone' => $address->contact_phone,
                 ],
-                'remark'       => $remark,
+                'remark' => $remark,
                 'total_amount' => 0,
-                'type'         => Order::TYPE_NORMAL,
+                'type' => Order::TYPE_NORMAL,
             ]);
             // 订单关联到当前用户
             $order->user()->associate($user);
@@ -48,11 +49,11 @@ class OrderService
             $totalAmount = 0;
             // 遍历用户提交的 SKU
             foreach ($items as $data) {
-                $sku  = ProductSku::find($data['sku_id']);
+                $sku = ProductSku::find($data['sku_id']);
                 // 创建一个 OrderItem 并直接与当前订单关联
                 $item = $order->items()->make([
                     'amount' => $data['amount'],
-                    'price'  => $sku->price,
+                    'price' => $sku->price,
                 ]);
                 $item->product()->associate($sku->product_id);
                 $item->productSku()->associate($sku);
@@ -99,15 +100,15 @@ class OrderService
             $address->update(['last_used_at' => Carbon::now()]);
             // 创建一个订单
             $order = new Order([
-                'address'      => [ // 将地址信息放入订单中
-                    'address'       => $address->full_address,
-                    'zip'           => $address->zip,
-                    'contact_name'  => $address->contact_name,
+                'address' => [ // 将地址信息放入订单中
+                    'address' => $address->full_address,
+                    'zip' => $address->zip,
+                    'contact_name' => $address->contact_name,
                     'contact_phone' => $address->contact_phone,
                 ],
-                'remark'       => '',
+                'remark' => '',
                 'total_amount' => $sku->price * $amount,
-                'type'         => Order::TYPE_CROWDFUNDING,
+                'type' => Order::TYPE_CROWDFUNDING,
             ]);
             // 订单关联到当前用户
             $order->user()->associate($user);
@@ -116,7 +117,7 @@ class OrderService
             // 创建一个新的订单项并与 SKU 关联
             $item = $order->items()->make([
                 'amount' => $amount,
-                'price'  => $sku->price,
+                'price' => $sku->price,
             ]);
             $item->product()->associate($sku->product_id);
             $item->productSku()->associate($sku);
@@ -147,15 +148,15 @@ class OrderService
             }
             // 创建一个订单
             $order = new Order([
-                'address'      => [ // 将地址信息放入订单中
-                    'address'       => $addressData['province'].$addressData['city'].$addressData['district'].$addressData['address'],
-                    'zip'           => $addressData['zip'],
-                    'contact_name'  => $addressData['contact_name'],
+                'address' => [ // 将地址信息放入订单中
+                    'address' => $addressData['province'] . $addressData['city'] . $addressData['district'] . $addressData['address'],
+                    'zip' => $addressData['zip'],
+                    'contact_name' => $addressData['contact_name'],
                     'contact_phone' => $addressData['contact_phone'],
                 ],
-                'remark'       => '',
+                'remark' => '',
                 'total_amount' => $sku->price,
-                'type'         => Order::TYPE_SECKILL,
+                'type' => Order::TYPE_SECKILL,
             ]);
             // 订单关联到当前用户
             $order->user()->associate($user);
@@ -164,11 +165,13 @@ class OrderService
             // 创建一个新的订单项并与 SKU 关联
             $item = $order->items()->make([
                 'amount' => 1, // 秒杀商品只能一份
-                'price'  => $sku->price,
+                'price' => $sku->price,
             ]);
             $item->product()->associate($sku->product_id);
             $item->productSku()->associate($sku);
             $item->save();
+
+            Redis::decr('seckill_sku_' . $sku->id);
 
             return $order;
         });
