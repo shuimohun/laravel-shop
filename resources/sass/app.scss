@@ -123,7 +123,6 @@ body {
     .pagination {
         margin-right: 5px;
     }
-    // scss 的 @include 用于引用一段样式
     @include product-list;
     .search-form {
         padding: 0 5px 10px;
